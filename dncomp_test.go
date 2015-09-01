@@ -91,25 +91,58 @@ func TestInvalid4(t *testing.T) {
 }
 
 func TestInvalidPointer1(t *testing.T) {
+	// pointer to invalid offset
 	input := []byte{2, 'A', 'B', 0, 0xc0, 6}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
 func TestInvalidPointer2(t *testing.T) {
+	// pointer to the pointer offset
 	input := []byte{2, 'A', 'B', 0, 0xc0, 5}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
+func TestInvalidPointer3(t *testing.T) {
+	// forward loop
+	input := []byte{2, 'A', 'B', 0, 0xc0, 6, 'C', 'D'}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+
 func TestLoop1(t *testing.T) {
+	// pointer loop to the pointer offset
 	input := []byte{2, 'A', 'B', 0, 0xc0, 4}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
 func TestLoop2(t *testing.T) {
+	// pointer loop forward and back
 	input := []byte{2, 'A', 'B', 0, 0xc0, 7, 'C', 'D', 0xc0, 4}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
+
+func TestLoop3(t *testing.T) {
+	// pointer loop backwards to invalid offset inside the same domain
+	input := []byte{2, 'A', 'B', 0xc0, 1}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+
+func TestLoop4(t *testing.T) {
+	// pointer loop backwards inside the same domain
+	input := []byte{2, 'A', 'B', 0xc0, 0}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+
+func TestLoop5(t *testing.T) {
+	// pointer loop backwards to invalid offset of previous domain
+	input := []byte{2, 'A', 'B', 0, 0xc0, 1}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+

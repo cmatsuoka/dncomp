@@ -1,5 +1,7 @@
-// Package dncomp implements domain name compression according to RFC 1035
-// section 4.1.4
+/*
+Package dncomp implements domain name compression according to RFC 1035
+section 4.1.4.
+*/
 package dncomp
 
 import "errors"
@@ -9,40 +11,31 @@ func Encode(d []string)[]byte {
 }
 */
 
-type ptrMap map[int]bool
-
-func addLabel(s *string, data []byte, start int, p ptrMap) int {
+func addLabel(s *string, data []byte, dstart, lstart int) int {
 	dataSize := len(data)
 
-	if start >= dataSize {
+	if lstart >= dataSize {
 		return -1
 	}
 
 	// check if pointer
-	if data[start]&0xc0 == 0xc0 {
-		offset := int(data[start]&0x3f)<<8 | int(data[start+1])
-
-		// loop detection
-		if p[offset] {
+	if data[lstart]&0xc0 == 0xc0 {
+		offset := int(data[lstart]&0x3f)<<8 | int(data[lstart+1])
+		if offset >= dstart || addLabel(s, data, dstart, offset) < 0 {
 			return -1
 		}
-		p[offset] = true
-
-		if offset >= dataSize || addLabel(s, data, offset, p) < 0 {
-			return -1
-		}
-		return start + 2
+		return lstart + 2
 	}
 
-	labelSize := int(data[start])
-	if start+labelSize >= dataSize {
+	labelSize := int(data[lstart])
+	if lstart+labelSize >= dataSize {
 		return -1
 	}
 
-	start++
-	end := start + labelSize
+	lstart++
+	end := lstart + labelSize
 
-	*s += string(data[start:end])
+	*s += string(data[lstart:end])
 
 	if end >= dataSize || data[end] == 0 {
 		return end + 1
@@ -50,7 +43,7 @@ func addLabel(s *string, data []byte, start int, p ptrMap) int {
 
 	*s += "."
 
-	return addLabel(s, data, end, p)
+	return addLabel(s, data, dstart, end)
 }
 
 func Decode(data []byte) ([]string, error) {
@@ -61,11 +54,8 @@ func Decode(data []byte) ([]string, error) {
 			break
 		}
 
-		// use this to prevent pointer loops
-		p := make(ptrMap)
-
 		s = append(s, "")
-		i = addLabel(&s[num], data, i, p)
+		i = addLabel(&s[num], data, i, i)
 
 		if i < 0 {
 			return nil, errors.New("malformed compressed data")
