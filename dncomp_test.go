@@ -102,7 +102,7 @@ func TestInvalidPointer2(t *testing.T) {
 	checkError(t, input, err, res)
 }
 
-func TestInvalidPointer3(t *testing.T) {
+func TestLoop1(t *testing.T) {
 	input := []byte{2, 'A', 'B', 0, 0xc0, 4}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
