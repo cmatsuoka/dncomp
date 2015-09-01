@@ -10,6 +10,12 @@ func Encode(d []string)[]byte {
 */
 
 func addLabel(s *string, data []byte, start int) int {
+	dataSize := len(data)
+
+	if start >= dataSize {
+		return -1
+	}
+
 	// check if pointer
 	if data[start]&0xc0 == 0xc0 {
 		offset := int(data[start]&0x3f)<<8 | int(data[start+1])
@@ -17,19 +23,22 @@ func addLabel(s *string, data []byte, start int) int {
 		return start + 2
 	}
 
-	size := int(data[start])
-	start++
-	end := start + size
-
-	if size >= len(data) {
+	labelSize := int(data[start])
+	if start + labelSize >= dataSize {
 		return -1
 	}
 
-	*s += string(data[start:end]) + "."
+	start++
+	end := start + labelSize
 
-	if end >= len(data) || data[end] == 0 {
+	*s += string(data[start:end])
+
+	if end >= dataSize || data[end] == 0 {
 		return end + 1
 	}
+
+	*s += "."
+
 	return addLabel(s, data, end)
 }
 
@@ -44,7 +53,7 @@ func Decode(data []byte) ([]string, error) {
 		i = addLabel(&s[num], data, i)
 
 		if (i < 0) {
-			return nil, errors.New("invalid compressed data")
+			return nil, errors.New("malformed compressed data")
 		}
 
 		num++
