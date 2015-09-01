@@ -29,7 +29,7 @@ func checkError(t *testing.T, input []byte, err error, res []string) {
 	}
 }
 
-func TestRFC(t *testing.T) {
+func TestRFCExample(t *testing.T) {
 	input := []byte{1, 'F', 3, 'I', 'S', 'I', 4, 'A', 'R', 'P', 'A', 0,
 		3, 'F', 'O', 'O', 0xc0, 0, 0xc0, 6, 0}
 
@@ -66,25 +66,29 @@ func TestSimple(t *testing.T) {
 	checkResult(t, input, err, res, expect)
 }
 
-func TestInvalid1(t *testing.T) {
+func TestInvalidLabelLength1(t *testing.T) {
+	// invalid label length
 	input := []byte{1}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
-func TestInvalid2(t *testing.T) {
+func TestInvalidLabelLength2(t *testing.T) {
+	// invalid label length
 	input := []byte{'A'}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
-func TestInvalid3(t *testing.T) {
+func TestInvalidLabelLength3(t *testing.T) {
+	// invalid label length
 	input := []byte{5, 'A', 'B'}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
-func TestInvalid4(t *testing.T) {
+func TestInvalidLabelLength4(t *testing.T) {
+	// invalid length in second label
 	input := []byte{2, 'A', 'B', 0, 1}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
@@ -107,6 +111,20 @@ func TestInvalidPointer2(t *testing.T) {
 func TestInvalidPointer3(t *testing.T) {
 	// forward loop
 	input := []byte{2, 'A', 'B', 0, 0xc0, 6, 'C', 'D'}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+
+func TestInvalidPointer4(t *testing.T) {
+	// pointer starting with 10
+	input := []byte{2, 'A', 'B', 0, 0x80, 0}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+
+func TestInvalidPointer5(t *testing.T) {
+	// pointer starting with 01
+	input := []byte{2, 'A', 'B', 0, 0x40, 0}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }

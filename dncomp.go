@@ -18,13 +18,18 @@ func addLabel(s *string, data []byte, dstart, lstart int) int {
 		return -1
 	}
 
-	// check if pointer
-	if data[lstart]&0xc0 == 0xc0 {
+	switch data[lstart]&0xc0 {
+	case 0xc0:
+		// pointer
 		offset := int(data[lstart]&0x3f)<<8 | int(data[lstart+1])
 		if offset >= dstart || addLabel(s, data, dstart, offset) < 0 {
 			return -1
 		}
 		return lstart + 2
+
+	case 0x80, 0x40:
+		// invalid pointer codes 10 and 01
+		return -1
 	}
 
 	labelSize := int(data[lstart])
