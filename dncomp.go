@@ -19,6 +19,9 @@ func addLabel(s *string, data []byte, start int) int {
 	// check if pointer
 	if data[start]&0xc0 == 0xc0 {
 		offset := int(data[start]&0x3f)<<8 | int(data[start+1])
+		if offset >= dataSize {
+			return -1
+		}
 		addLabel(s, data, offset)
 		return start + 2
 	}
