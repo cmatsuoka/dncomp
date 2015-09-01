@@ -107,3 +107,9 @@ func TestLoop1(t *testing.T) {
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
+
+func TestLoop2(t *testing.T) {
+	input := []byte{2, 'A', 'B', 0, 0xc0, 7, 'C', 'D', 0xc0, 4}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}

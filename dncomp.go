@@ -35,7 +35,7 @@ func addLabel(s *string, data []byte, start int, p ptrMap) int {
 	}
 
 	labelSize := int(data[start])
-	if start + labelSize >= dataSize {
+	if start+labelSize >= dataSize {
 		return -1
 	}
 
@@ -55,7 +55,7 @@ func addLabel(s *string, data []byte, start int, p ptrMap) int {
 
 func Decode(data []byte) ([]string, error) {
 	var s []string
-	
+
 	for i, num := 0, 0; ; {
 		if i >= len(data) {
 			break
@@ -67,7 +67,7 @@ func Decode(data []byte) ([]string, error) {
 		s = append(s, "")
 		i = addLabel(&s[num], data, i, p)
 
-		if (i < 0) {
+		if i < 0 {
 			return nil, errors.New("malformed compressed data")
 		}
 
