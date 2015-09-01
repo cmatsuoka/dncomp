@@ -31,7 +31,7 @@ func checkError(t *testing.T, input []byte, err error, res []string) {
 
 func TestRFC(t *testing.T) {
 	input := []byte{1, 'F', 3, 'I', 'S', 'I', 4, 'A', 'R', 'P', 'A', 0,
-		3, 'F', 'O', 'O', 0xc0, 0, 0xc0, 6, 0, 0}
+		3, 'F', 'O', 'O', 0xc0, 0, 0xc0, 6, 0}
 
 	expect := []string{"F.ISI.ARPA", "FOO.F.ISI.ARPA", "ARPA", ""}
 
@@ -67,32 +67,43 @@ func TestSimple(t *testing.T) {
 }
 
 func TestInvalid1(t *testing.T) {
-	input := []byte{ 1 }
+	input := []byte{1}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
 func TestInvalid2(t *testing.T) {
-	input := []byte{ 'A' }
+	input := []byte{'A'}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
 func TestInvalid3(t *testing.T) {
-	input := []byte{ 5, 'A', 'B' }
+	input := []byte{5, 'A', 'B'}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
 func TestInvalid4(t *testing.T) {
-	input := []byte{ 2, 'A', 'B', 0, 1 }
+	input := []byte{2, 'A', 'B', 0, 1}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
 func TestInvalidPointer1(t *testing.T) {
-	input := []byte{ 2, 'A', 'B', 0, 0xc0, 6 }
+	input := []byte{2, 'A', 'B', 0, 0xc0, 6}
 	res, err := Decode(input)
 	checkError(t, input, err, res)
 }
 
+func TestInvalidPointer2(t *testing.T) {
+	input := []byte{2, 'A', 'B', 0, 0xc0, 5}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+
+func TestInvalidPointer3(t *testing.T) {
+	input := []byte{2, 'A', 'B', 0, 0xc0, 4}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
