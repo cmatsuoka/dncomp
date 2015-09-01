@@ -130,7 +130,7 @@ func TestInvalidPointer5(t *testing.T) {
 }
 
 func TestLoop1(t *testing.T) {
-	// pointer loop to the pointer offset
+	// pointer loop to pointer offset
 	input := []byte{2, 'A', 'B', 0, 0xc0, 4}
 	res, err := Decode(input)
 	checkError(t, input, err, res)

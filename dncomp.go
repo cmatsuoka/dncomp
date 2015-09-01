@@ -1,6 +1,13 @@
 /*
 Package dncomp implements domain name compression according to RFC 1035
 section 4.1.4.
+
+Compressed domain names are composed by a sequence of label size and labels,
+ending with 0 or a pointer to an offset in compressed data. Pointers are
+encoded in a two-octet word with the most significant bits set to 1, and the
+rest of the word containing the pointer offset. The maximum size of a label
+is 63 octets, and pointer codes 10 and 01 are reserved. Pointers should
+always point backwards to data that has already been processed.
 */
 package dncomp
 
@@ -51,6 +58,9 @@ func addLabel(s *string, data []byte, dstart, lstart int) int {
 	return addLabel(s, data, dstart, end)
 }
 
+// Decode uncompresses a list of domain names encoded according to RFC 1035
+// section 4.1.4, returning a list of uncompressed domain names or an error
+// if data is inconsistent.
 func Decode(data []byte) ([]string, error) {
 	var s []string
 
