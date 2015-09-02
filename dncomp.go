@@ -8,6 +8,22 @@ encoded in a two-octet word with the most significant bits set to 1, and the
 rest of the word containing the pointer offset. The maximum size of a label
 is 63 octets, and pointer codes 10 and 01 are reserved. Pointers should
 always point backwards to data that has already been processed.
+
+Example:
+
+	1, 'F',
+	3, 'I', 'S', 'I',
+	4, 'A', 'R', 'P', 'A', 0,
+	3, 'F', 'O', 'O', 0xc0, 0,
+	0xc0, 6, 0
+
+decodes to:
+
+	"F.ISI.ARPA"
+	"FOO.F.ISI.ARPA"
+	"ARPA"
+	"" (root domain name, no labels)
+
 */
 package dncomp
 
