@@ -28,9 +28,10 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 		return -1
 	}
 
-	switch data[lstart]&0xc0 {
+	// check for pointer
+	switch data[lstart] & 0xc0 {
 	case 0xc0:
-		// pointer
+		// offset
 		offset := int(data[lstart]&0x3f)<<8 | int(data[lstart+1])
 		if offset >= dstart || addLabel(b, data, dstart, offset) < 0 {
 			return -1
@@ -38,7 +39,7 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 		return lstart + 2
 
 	case 0x80, 0x40:
-		// invalid pointer codes 10 and 01
+		// reserved codes 10 and 01
 		return -1
 	}
 
@@ -50,11 +51,13 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	lstart++
 	end := lstart + labelSize
 
+	// write label to domain name string
 	_, err := b.Write(data[lstart:end])
 	if err != nil {
 		return -1
 	}
 
+	// check for end of domain name
 	if end >= dataSize || data[end] == 0 {
 		return end + 1
 	}
@@ -77,7 +80,6 @@ func Decode(data []byte) ([]string, error) {
 
 		var b bytes.Buffer
 		i = addLabel(&b, data, i, i)
-
 		if i < 0 {
 			return nil, errors.New("malformed compressed data")
 		}
