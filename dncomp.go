@@ -21,6 +21,8 @@ func Encode(d []string)[]byte {
 }
 */
 
+// Function addLabel adds a label from offset lstart of compressed data to
+// byte buffer b, for the domain name starting at dstart.
 func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	dataSize := len(data)
 
@@ -31,6 +33,11 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	// check for pointer
 	switch data[lstart] & 0xc0 {
 	case 0xc0:
+		// check if second octet is available
+		if lstart + 1 >= dataSize {
+			return -1
+		}
+
 		// offset
 		offset := int(data[lstart]&0x3f)<<8 | int(data[lstart+1])
 		if offset >= dstart || addLabel(b, data, dstart, offset) < 0 {

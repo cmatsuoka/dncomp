@@ -129,6 +129,13 @@ func TestInvalidPointer5(t *testing.T) {
 	checkError(t, input, err, res)
 }
 
+func TestInvalidPointer6(t *testing.T) {
+	// pointer with only one octet
+	input := []byte{0xc0}
+	res, err := Decode(input)
+	checkError(t, input, err, res)
+}
+
 func TestLoop1(t *testing.T) {
 	// pointer loop to pointer offset
 	input := []byte{2, 'A', 'B', 0, 0xc0, 4}
