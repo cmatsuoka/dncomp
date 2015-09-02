@@ -11,14 +11,17 @@ always point backwards to data that has already been processed.
 */
 package dncomp
 
-import "errors"
+import (
+	"bytes"
+	"errors"
+)
 
 /*
 func Encode(d []string)[]byte {
 }
 */
 
-func addLabel(s *string, data []byte, dstart, lstart int) int {
+func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	dataSize := len(data)
 
 	if lstart >= dataSize {
@@ -29,7 +32,7 @@ func addLabel(s *string, data []byte, dstart, lstart int) int {
 	case 0xc0:
 		// pointer
 		offset := int(data[lstart]&0x3f)<<8 | int(data[lstart+1])
-		if offset >= dstart || addLabel(s, data, dstart, offset) < 0 {
+		if offset >= dstart || addLabel(b, data, dstart, offset) < 0 {
 			return -1
 		}
 		return lstart + 2
@@ -47,15 +50,18 @@ func addLabel(s *string, data []byte, dstart, lstart int) int {
 	lstart++
 	end := lstart + labelSize
 
-	*s += string(data[lstart:end])
+	_, err := b.Write(data[lstart:end])
+	if err != nil {
+		return -1
+	}
 
 	if end >= dataSize || data[end] == 0 {
 		return end + 1
 	}
 
-	*s += "."
+	b.WriteByte(byte('.'))
 
-	return addLabel(s, data, dstart, end)
+	return addLabel(b, data, dstart, end)
 }
 
 // Decode uncompresses a list of domain names encoded according to RFC 1035
@@ -64,19 +70,19 @@ func addLabel(s *string, data []byte, dstart, lstart int) int {
 func Decode(data []byte) ([]string, error) {
 	var s []string
 
-	for i, num := 0, 0; ; {
+	for i := 0; ; {
 		if i >= len(data) {
 			break
 		}
 
-		s = append(s, "")
-		i = addLabel(&s[num], data, i, i)
+		var b bytes.Buffer
+		i = addLabel(&b, data, i, i)
 
 		if i < 0 {
 			return nil, errors.New("malformed compressed data")
 		}
 
-		num++
+		s = append(s, b.String())
 	}
 
 	return s, nil
