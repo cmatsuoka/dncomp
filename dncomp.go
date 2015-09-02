@@ -32,13 +32,16 @@ import (
 	"errors"
 )
 
-/*
+// Encode receives a list of domain names and encodes it according to
+// the compression scheme described in RFC 1035 section 4.1.4.
 func Encode(d []string)[]byte {
-}
-*/
+	var data []byte
 
-// Function addLabel adds a label from offset lstart of compressed data to
-// byte buffer b, for the domain name starting at dstart.
+	return data
+}
+
+// addLabel adds a label from offset lstart of compressed data to byte
+// buffer b, for the domain name starting at dstart.
 func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	dataSize := len(data)
 
@@ -67,6 +70,12 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	}
 
 	labelSize := int(data[lstart])
+
+	// check end of domain name
+	if labelSize == 0 {
+		return lstart + 1
+	}
+
 	if lstart+labelSize >= dataSize {
 		return -1
 	}
@@ -80,12 +89,15 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 		return -1
 	}
 
-	// check for end of domain name
-	if end >= dataSize || data[end] == 0 {
-		return end + 1
+	// check for missing end marker
+	if end >= dataSize {
+		return -1
 	}
 
-	b.WriteByte(byte('.'))
+	// add dot if we have more labels
+	if data[end] != 0 {
+		b.WriteByte(byte('.'))
+	}
 
 	return addLabel(b, data, dstart, end)
 }
