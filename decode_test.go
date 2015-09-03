@@ -15,9 +15,10 @@ func equal(a, b []string) bool {
 }
 
 func checkDecode(t *testing.T, input []byte, err error, res, expect []string) {
-	if err != nil {
+	switch {
+	case err != nil:
 		t.Error("error:", err.Error())
-	} else if !equal(res, expect) {
+	case !equal(res, expect):
 		t.Error("decoding error for input", input,
 			", expect", expect, ", got", res)
 	}
@@ -180,15 +181,3 @@ func TestDecodeLoop5(t *testing.T) {
 	checkError(t, input, err, res)
 }
 
-// Encoding tests
-
-/*
-func TestEncodeSimple(t *testing T) {
-	input = []string{"A"}
-
-	expect := []byte{1, 'A', 0}
-
-	res, err := Encode(input)
-	checkEncode(t, input, err, res, expect)
-}
-*/

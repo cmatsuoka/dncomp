@@ -32,17 +32,9 @@ import (
 	"errors"
 )
 
-// Encode receives a list of domain names and encodes it according to
-// the compression scheme described in RFC 1035 section 4.1.4.
-func Encode(d []string)[]byte {
-	var data []byte
-
-	return data
-}
-
-// addLabel adds a label from offset lstart of compressed data to byte
+// decodeLabel adds a label from offset lstart of compressed data to byte
 // buffer b, for the domain name starting at dstart.
-func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
+func decodeLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	dataSize := len(data)
 
 	if lstart >= dataSize {
@@ -53,13 +45,13 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 	switch data[lstart] & 0xc0 {
 	case 0xc0:
 		// check if second octet is available
-		if lstart + 1 >= dataSize {
+		if lstart+1 >= dataSize {
 			return -1
 		}
 
 		// offset
 		offset := int(data[lstart]&0x3f)<<8 | int(data[lstart+1])
-		if offset >= dstart || addLabel(b, data, dstart, offset) < 0 {
+		if offset >= dstart || decodeLabel(b, data, dstart, offset) < 0 {
 			return -1
 		}
 		return lstart + 2
@@ -99,7 +91,7 @@ func addLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 		b.WriteByte(byte('.'))
 	}
 
-	return addLabel(b, data, dstart, end)
+	return decodeLabel(b, data, dstart, end)
 }
 
 // Decode uncompresses a list of domain names encoded according to RFC 1035
@@ -114,7 +106,7 @@ func Decode(data []byte) ([]string, error) {
 		}
 
 		var b bytes.Buffer
-		i = addLabel(&b, data, i, i)
+		i = decodeLabel(&b, data, i, i)
 		if i < 0 {
 			return nil, errors.New("malformed compressed data")
 		}
