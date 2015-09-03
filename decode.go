@@ -38,56 +38,55 @@ import (
 var ErrMalformedCompressedData = errors.New("dncomp: malformed compressed data")
 
 // decodeLabel adds a label from offset lstart of compressed data to byte
-// buffer b, for the domain name starting at dstart.
-func decodeLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
-	dataSize := len(data)
-
-	if lstart >= dataSize {
+// buffer b, for the domain name starting at start.
+func decodeLabel(b *bytes.Buffer, data []byte, start, off int) int {
+	if off >= len(data) {
 		return -1
 	}
 
+	size := int(data[off])
+	off++
+
 	// check for pointer
-	switch data[lstart] & 0xc0 {
+	switch size & 0xc0 {
+	case 0x00:
+		// check end of domain name
+		if size == 0 {
+			return off
+		}
+		// sanity check: invalid label length 
+			if off+size > len(data) {
+			return -1
+		}
+
 	case 0xc0:
 		// check if second octet is available
-		if lstart+1 >= dataSize {
+		if off >= len(data) {
 			return -1
 		}
 
 		// offset
-		offset := int(data[lstart]&0x3f)<<8 | int(data[lstart+1])
-		if offset >= dstart || decodeLabel(b, data, dstart, offset) < 0 {
+		ptr := (size&0x3f)<<8 | int(data[off])
+		if ptr >= start || decodeLabel(b, data, start, ptr) < 0 {
 			return -1
 		}
-		return lstart + 2
+		return off + 1
 
 	case 0x80, 0x40:
 		// reserved codes 10 and 01
 		return -1
 	}
 
-	labelSize := int(data[lstart])
-
-	// check end of domain name
-	if labelSize == 0 {
-		return lstart + 1
-	}
-
-	if lstart+labelSize >= dataSize {
-		return -1
-	}
-
-	lstart++
-	end := lstart + labelSize
+	end := off + size
 
 	// write label to domain name string
-	_, err := b.Write(data[lstart:end])
+	_, err := b.Write(data[off:end])
 	if err != nil {
 		return -1
 	}
 
-	// check for missing end marker
-	if end >= dataSize {
+	// sanity check: missing end marker
+	if end >= len(data) {
 		return -1
 	}
 
@@ -96,7 +95,7 @@ func decodeLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
 		b.WriteByte(byte('.'))
 	}
 
-	return decodeLabel(b, data, dstart, end)
+	return decodeLabel(b, data, start, end)
 }
 
 // Decode uncompresses a list of domain names encoded according to RFC 1035
