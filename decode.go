@@ -37,65 +37,65 @@ import (
 // character set.
 var ErrMalformedCompressedData = errors.New("dncomp: malformed compressed data")
 
-// decodeLabel adds a label from offset lstart of compressed data to byte
-// buffer b, for the domain name starting at start.
+// decodeLabel adds a label from offset off of compressed data to byte
+// buffer b, for the name record starting at start.
 func decodeLabel(b *bytes.Buffer, data []byte, start, off int) int {
-	if off >= len(data) {
-		return -1
-	}
-
-	size := int(data[off])
-	off++
-
-	// check for pointer
-	switch size & 0xc0 {
-	case 0x00:
-		// check end of domain name
-		if size == 0 {
-			return off
-		}
-		// sanity check: invalid label length 
-			if off+size > len(data) {
-			return -1
-		}
-
-	case 0xc0:
-		// check if second octet is available
+	for {
 		if off >= len(data) {
 			return -1
 		}
 
-		// offset
-		ptr := (size&0x3f)<<8 | int(data[off])
-		if ptr >= start || decodeLabel(b, data, start, ptr) < 0 {
+		size := int(data[off])
+		off++
+
+		// check for pointer
+		switch size & 0xc0 {
+		case 0x00:
+			// end of domain name
+			if size == 0 {
+				return off
+			}
+			// sanity check: invalid label length
+			if off+size > len(data) {
+				return -1
+			}
+
+			// write label to domain name string
+			end := off + size
+			_, err := b.Write(data[off:end])
+			if err != nil {
+				return -1
+			}
+			off = end
+
+			// sanity check: missing end marker
+			if end >= len(data) {
+				return -1
+			}
+
+			// add dot if we have more labels
+			if data[end] != 0 {
+				b.WriteByte(byte('.'))
+			}
+
+		case 0xc0:
+			// sanity check: second octet available
+			if off >= len(data) {
+				return -1
+			}
+
+			// pointer offset
+			ptr := (size&0x3f)<<8 | int(data[off])
+			if ptr >= start || decodeLabel(b, data, start, ptr) < 0 {
+				return -1
+			}
+			return off + 1
+
+		default:
+			// reserved codes 10 and 01
 			return -1
 		}
-		return off + 1
-
-	case 0x80, 0x40:
-		// reserved codes 10 and 01
-		return -1
 	}
-
-	end := off + size
-
-	// write label to domain name string
-	_, err := b.Write(data[off:end])
-	if err != nil {
-		return -1
-	}
-
-	// sanity check: missing end marker
-	if end >= len(data) {
-		return -1
-	}
-
-	// add dot if we have more labels
-	if data[end] != 0 {
-		b.WriteByte(byte('.'))
-	}
-
-	return decodeLabel(b, data, start, end)
 }
 
 // Decode uncompresses a list of domain names encoded according to RFC 1035
