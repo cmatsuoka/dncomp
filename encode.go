@@ -34,7 +34,6 @@ func encodeLabel(b *bytes.Buffer, s string) (int, error) {
 }
 
 func encodeDomainName(b *bytes.Buffer, s string, i int) (int, string, error) {
-	
 	var head, tail string
 
 	tail = s
@@ -71,4 +70,3 @@ func Encode(d []string) ([]byte, error) {
 
 	return b.Bytes(), nil
 }
-

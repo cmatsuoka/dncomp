@@ -32,6 +32,11 @@ import (
 	"errors"
 )
 
+// ErrMalformedCompressedData is returned when compressed domain names
+// cannot be properly parsed due to invalid offsets, label sizes, or
+// character set.
+var ErrMalformedCompressedData = errors.New("dncomp: malformed compressed data")
+
 // decodeLabel adds a label from offset lstart of compressed data to byte
 // buffer b, for the domain name starting at dstart.
 func decodeLabel(b *bytes.Buffer, data []byte, dstart, lstart int) int {
@@ -108,7 +113,7 @@ func Decode(data []byte) ([]string, error) {
 		var b bytes.Buffer
 		i = decodeLabel(&b, data, i, i)
 		if i < 0 {
-			return nil, errors.New("malformed compressed data")
+			return nil, ErrMalformedCompressedData
 		}
 
 		s = append(s, b.String())
